@@ -33,7 +33,7 @@ jobs:
       - name: Test Python dependencies with Snyk
         uses: snyk/actions/python@master  # Action officielle de Snyk pour tester les dépendances Python
         with:
-          command: test  # Lancer le test des vulnérabilités
+          command: te st  # Lancer le test des vulnérabilités
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}  # Ajouter le token Snyk depuis les secrets de GitHub
 
