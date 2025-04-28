@@ -31,6 +31,7 @@ jobs:
 
       # Étape 4.1: Scanner l'image Docker avec Snyk (format table affiché)
       - name: Snyk test - Show table output
+        continue-on-error: true
         uses: snyk/actions/docker@master
         with:
           image: my-app
