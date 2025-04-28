@@ -35,14 +35,7 @@ jobs:
         uses: snyk/actions/docker@master
         with:
           image: my-app
-          args: --file=Dockerfile  # Normal test (table affichée dans les logs)
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
-      # Étape 4.2: Scanner l'image Docker avec Snyk (et enregistrer un fichier JSON)
-      - name: Snyk test - Generate JSON report
-        run: |
-          snyk container test my-app --file=Dockerfile --json > snyk-report.json
+          args: --file=Dockerfile --json > snyk-report.json # Normal test (table affichée dans les logs)
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
