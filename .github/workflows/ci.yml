@@ -59,7 +59,7 @@ jobs:
 
       # Étape 6: Upload du rapport JSON (optionnel mais conseillé)
       - name: Upload Snyk JSON report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: snyk-report
           path: snyk-report.json
