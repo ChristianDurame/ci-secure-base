@@ -31,7 +31,7 @@ jobs:
 
       # Étape 4: Tester les dépendances Python avec Snyk
       - name: Test Python dependencies with Snyk
-        uses: snyk/actions/python@v1  # Action officielle de Snyk pour tester les dépendances Python
+        uses: snyk/actions/python@master  # Action officielle de Snyk pour tester les dépendances Python
         with:
           command: test  # Lancer le test des vulnérabilités
         env:
