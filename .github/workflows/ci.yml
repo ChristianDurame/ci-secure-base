@@ -1,0 +1,55 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  security_scan:
+    runs-on: ubuntu-latest  # Utilise une machine Ubuntu pour exécuter les étapes
+
+    steps:
+      # Étape 1: Vérifier le code source (checkout)
+      - name: Checkout code
+        uses: actions/checkout@v3  # Mise à jour de l'action checkout vers la version 3
+
+      # Étape 2: Construire l'image Docker
+      - name: Build Docker image
+        run: |
+          docker build -t my-app .  # Construire l'image Docker à partir du Dockerfile
+
+      # Étape 3: Scanner l'image Docker avec Trivy (vulnérabilités)
+      - name: Scan Docker image for vulnerabilities with Trivy
+        uses: aquasecurity/trivy-action@v0.3.0  # Action officielle de Trivy pour scanner l'image Docker
+        with:
+          image: my-app  # Nom de l'image construite
+          format: 'table'  # Format du rapport, ici en table pour une lecture facile dans les logs
+
+      # Étape 4: Tester les dépendances Python avec Snyk
+      - name: Test Python dependencies with Snyk
+        uses: snyk/actions/python@v1  # Action officielle de Snyk pour tester les dépendances Python
+        with:
+          command: test  # Commande de test de vulnérabilités
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}  # Ajouter le token Snyk depuis les secrets de GitHub
+
+      # Étape 5: Détecter les secrets dans le code avec GitLeaks
+      - name: Install GitLeaks
+        run: |
+          wget https://github.com/zricethezav/gitleaks/releases/download/v8.10.1/gitleaks-linux-amd64  # Télécharger GitLeaks
+          chmod +x gitleaks-linux-amd64  # Rendre GitLeaks exécutable
+          sudo mv gitleaks-linux-amd64 /usr/local/bin/gitleaks  # Déplacer GitLeaks dans le répertoire global
+          gitleaks --version  # Vérifier que GitLeaks est installé
+
+      - name: Run GitLeaks to detect secrets
+        run: |
+          gitleaks --scan-repo --path=./  # Scanner le code source à la recherche de secrets
+
+      # Étape 6: Nettoyer l'image Docker (optionnel)
+      - name: Clean up
+        run: |
+          docker rmi my-app  # Supprimer l'image Docker après le scan
