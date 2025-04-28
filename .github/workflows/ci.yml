@@ -3,53 +3,54 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main  # Exécuter sur chaque push vers la branche principale
+      - main
   pull_request:
     branches:
-      - main  # Exécuter lors de la création d'une PR vers la branche principale
+      - main
 
 jobs:
   security_scan:
-    runs-on: ubuntu-latest  # Utiliser un runner Ubuntu
+    runs-on: ubuntu-latest
 
     steps:
       # Étape 1: Vérifier le code source (checkout)
       - name: Checkout code
-        uses: actions/checkout@v3  # Action pour cloner le code du dépôt
+        uses: actions/checkout@v3
 
       # Étape 2: Construire l'image Docker
       - name: Build Docker image
         run: |
-          docker build -t my-app .  # Construire l'image Docker à partir du Dockerfile
+          docker build -t my-app .  # Construire l'image Docker
 
-      # Étape 3: Scanner l'image Docker pour des vulnérabilités avec Trivy
-      - name: Scan Docker image for vulnerabilities with Trivy
-        uses: aquasecurity/trivy-action@master  # Version stable et plus courante
+      # Étape 3: Scanner l'image Docker avec Trivy
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
         with:
-          image-ref: "my-app"  # Nom de l'image construite
-          format: 'table'  # Format du rapport de scan, ici sous forme de table
+          image-ref: "my-app"
+          format: 'table'  # Rapport lisible dans les logs
 
-      # Étape 4: Tester les dépendances Python avec Snyk
-      - name: Test Python dependencies with Snyk
-        uses: snyk/actions/python@master  # Action officielle de Snyk pour tester les dépendances Python
+      # Étape 4: Scanner le Dockerfile avec Snyk et sortir un rapport JSON
+      - name: Scan Dockerfile with Snyk
+        uses: snyk/actions/docker@master
         with:
-          command: te st  # Lancer le test des vulnérabilités
+          image: my-app
+          args: --file=Dockerfile --json  # Spécifie le fichier Dockerfile + format JSON
         env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}  # Ajouter le token Snyk depuis les secrets de GitHub
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      # Étape 5: Détecter les secrets dans le code avec GitLeaks
+      # Étape 5: Détecter les secrets avec GitLeaks
       - name: Install GitLeaks
         run: |
-          wget https://github.com/zricethezav/gitleaks/releases/download/v8.10.1/gitleaks-linux-amd64  # Télécharger GitLeaks
-          chmod +x gitleaks-linux-amd64  # Rendre le fichier exécutable
-          sudo mv gitleaks-linux-amd64 /usr/local/bin/gitleaks  # Déplacer GitLeaks dans le répertoire global
-          gitleaks --version  # Vérifier que GitLeaks est correctement installé
+          wget https://github.com/gitleaks/gitleaks/releases/download/v8.10.1/gitleaks-linux-amd64
+          chmod +x gitleaks-linux-amd64
+          sudo mv gitleaks-linux-amd64 /usr/local/bin/gitleaks
+          gitleaks --version
 
       - name: Run GitLeaks to detect secrets
         run: |
-          gitleaks --scan-repo --path=./  # Scanner le dépôt pour détecter les secrets (clés, tokens, etc.)
+          gitleaks detect --source=./ --verbose
 
-      # Étape 6: Nettoyer l'image Docker (optionnel)
+      # Étape 6: Nettoyer l'image Docker
       - name: Clean up Docker image
         run: |
-          docker rmi my-app  # Supprimer l'image Docker après les scans
+          docker rmi my-app
