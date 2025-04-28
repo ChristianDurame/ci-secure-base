@@ -40,16 +40,10 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       # Étape 5: Détecter les secrets avec GitLeaks
-      - name: Install GitLeaks
-        run: |
-          wget https://github.com/gitleaks/gitleaks/releases/download/v8.10.1/gitleaks-linux-amd64
-          chmod +x gitleaks-linux-amd64
-          sudo mv gitleaks-linux-amd64 /usr/local/bin/gitleaks
-          gitleaks --version
-
-      - name: Run GitLeaks to detect secrets
-        run: |
-          gitleaks detect --source=./ --verbose
+      - name: Gitleaks check
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Étape 6: Upload du rapport JSON (optionnel mais conseillé)
       - name: Upload Snyk JSON report
