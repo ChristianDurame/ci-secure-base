@@ -3,37 +3,37 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main
+      - main  # Exécuter sur chaque push vers la branche principale
   pull_request:
     branches:
-      - main
+      - main  # Exécuter lors de la création d'une PR vers la branche principale
 
 jobs:
   security_scan:
-    runs-on: ubuntu-latest  # Utilise une machine Ubuntu pour exécuter les étapes
+    runs-on: ubuntu-latest  # Utiliser un runner Ubuntu
 
     steps:
       # Étape 1: Vérifier le code source (checkout)
       - name: Checkout code
-        uses: actions/checkout@v3  # Mise à jour de l'action checkout vers la version 3
+        uses: actions/checkout@v3  # Action pour cloner le code du dépôt
 
       # Étape 2: Construire l'image Docker
       - name: Build Docker image
         run: |
           docker build -t my-app .  # Construire l'image Docker à partir du Dockerfile
 
-      # Étape 3: Scanner l'image Docker avec Trivy (vulnérabilités)
+      # Étape 3: Scanner l'image Docker pour des vulnérabilités avec Trivy
       - name: Scan Docker image for vulnerabilities with Trivy
-        uses: aquasecurity/trivy-action@v0.14.0  # Action officielle de Trivy pour scanner l'image Docker
+        uses: aquasecurity/trivy-action@v0.14.0  # Action officielle pour Trivy
         with:
           image: my-app  # Nom de l'image construite
-          format: 'table'  # Format du rapport, ici en table pour une lecture facile dans les logs
+          format: 'table'  # Format du rapport de scan, ici sous forme de table
 
       # Étape 4: Tester les dépendances Python avec Snyk
       - name: Test Python dependencies with Snyk
         uses: snyk/actions/python@v1  # Action officielle de Snyk pour tester les dépendances Python
         with:
-          command: test  # Commande de test de vulnérabilités
+          command: test  # Lancer le test des vulnérabilités
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}  # Ajouter le token Snyk depuis les secrets de GitHub
 
@@ -41,15 +41,15 @@ jobs:
       - name: Install GitLeaks
         run: |
           wget https://github.com/zricethezav/gitleaks/releases/download/v8.10.1/gitleaks-linux-amd64  # Télécharger GitLeaks
-          chmod +x gitleaks-linux-amd64  # Rendre GitLeaks exécutable
+          chmod +x gitleaks-linux-amd64  # Rendre le fichier exécutable
           sudo mv gitleaks-linux-amd64 /usr/local/bin/gitleaks  # Déplacer GitLeaks dans le répertoire global
-          gitleaks --version  # Vérifier que GitLeaks est installé
+          gitleaks --version  # Vérifier que GitLeaks est correctement installé
 
       - name: Run GitLeaks to detect secrets
         run: |
-          gitleaks --scan-repo --path=./  # Scanner le code source à la recherche de secrets
+          gitleaks --scan-repo --path=./  # Scanner le dépôt pour détecter les secrets (clés, tokens, etc.)
 
       # Étape 6: Nettoyer l'image Docker (optionnel)
-      - name: Clean up
+      - name: Clean up Docker image
         run: |
-          docker rmi my-app  # Supprimer l'image Docker après le scan
+          docker rmi my-app  # Supprimer l'image Docker après les scans
