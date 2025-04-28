@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Étape 1: Vérifier le code source (checkout)
+      # Étape 1: Vérifier le code source
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -27,14 +27,21 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: "my-app"
-          format: 'table'  # Rapport lisible dans les logs
+          format: 'table'  # Scanner au format lisible (table)
 
-      # Étape 4: Scanner le Dockerfile avec Snyk et sortir un rapport JSON
-      - name: Scan Dockerfile with Snyk
+      # Étape 4.1: Scanner l'image Docker avec Snyk (format table affiché)
+      - name: Snyk test - Show table output
         uses: snyk/actions/docker@master
         with:
           image: my-app
-          args: --file=Dockerfile --json  # Spécifie le fichier Dockerfile + format JSON
+          args: --file=Dockerfile  # Normal test (table affichée dans les logs)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      # Étape 4.2: Scanner l'image Docker avec Snyk (et enregistrer un fichier JSON)
+      - name: Snyk test - Generate JSON report
+        run: |
+          snyk container test my-app --file=Dockerfile --json > snyk-report.json
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -50,7 +57,14 @@ jobs:
         run: |
           gitleaks detect --source=./ --verbose
 
-      # Étape 6: Nettoyer l'image Docker
+      # Étape 6: Upload du rapport JSON (optionnel mais conseillé)
+      - name: Upload Snyk JSON report
+        uses: actions/upload-artifact@v3
+        with:
+          name: snyk-report
+          path: snyk-report.json
+
+      # Étape 7: Nettoyer l'image Docker
       - name: Clean up Docker image
         run: |
           docker rmi my-app
