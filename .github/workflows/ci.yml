@@ -35,7 +35,7 @@ jobs:
         uses: snyk/actions/docker@master
         with:
           image: my-app
-          args: --file=Dockerfile --json > snyk-report.json # Normal test (table affichée dans les logs)
+          args: --file=Dockerfile --json-file-output=snyk-report.json # Normal test (table affichée dans les logs)
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
